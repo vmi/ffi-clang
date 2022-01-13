@@ -78,7 +78,7 @@ module FFI
 			else
 				case
 				when :windows, :cygwin
-					llvm_bin_dir = File.real_path "#{ENV['PROGRAMFILES']}/LLVM/bin"
+					llvm_bin_dir = File.realpath "#{ENV['PROGRAMFILES']}/LLVM/bin"
 					libs << llvm_bin_dir + '/libclang.dll'
 				else
 					libs << "clang"
