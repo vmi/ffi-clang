@@ -47,7 +47,7 @@ describe CompilationDatabase do
 
 		it "returns compile commands if the specified file is not found" do
 			expect(cdb.compile_commands(not_found_file)).to be_kind_of(CompilationDatabase::CompileCommands)
-			if FFI::Clang.clang_version_string[/\d+/].to_i >= 10
+			if FFI::Clang.clang_version_string[/\d+/].to_i >= 8
 				expect(cdb.compile_commands(not_found_file).size).to eq(1)
 			else
 				expect(cdb.compile_commands(not_found_file).size).to eq(0)
