@@ -34,8 +34,10 @@ module FFI::Clang
 			:darwin
 		when /linux/
 			:linux
-		when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+		when /mswin|msys|mingw|bccwin|wince|emc/
 			:windows
+		when /cygwin/
+			:cygwin
 		else
 			os
 		end
