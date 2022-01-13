@@ -64,6 +64,12 @@ module FFI
 				when :windows
 					llvm_bin_dir = `#{llvm_config} --bindir`.chomp
 					libs << llvm_bin_dir + '/libclang.dll'
+				when :cygwin
+					FFI.typedef :long, :time_t
+					llvm_version = `#{llvm_config} --version`.chomp.split(/\./)
+					1.upto(llvm_version.length) do |len|
+						libs.unshift("clang-#{llvm_version[0...len].join('.')}")
+					end
 				else
 					libs << llvm_library_dir + '/libclang.so'
 				end
