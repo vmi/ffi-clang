@@ -34,6 +34,13 @@ module FFI
 				 llvm_config ||= MakeMakefile.find_executable0("llvm-config")
 			end
 
+			platform = FFI::Clang.platform
+
+			case platform
+			when :cygwin
+				FFI.typedef :long, :time_t
+			end
+
 			libs = []
 			begin
 				xcode_dir = `xcode-select -p`.chomp
@@ -50,37 +57,31 @@ module FFI
 				# Ignore
 			end
 
-			libs << "clang"
-
 			if ENV['LIBCLANG']
 				libs << ENV['LIBCLANG']
 			elsif llvm_config
 				llvm_library_dir = `#{llvm_config} --libdir`.chomp
-				platform = FFI::Clang.platform
-				
 				case platform
 				when :darwin
 					libs << llvm_library_dir + '/libclang.dylib'
 				when :windows
-					if llvm_config
-						llvm_bin_dir = `#{llvm_config} --bindir`.chomp
-					else
-						llvm_bin_dir = File.real_path "#{ENV['PROGRAMFILES']}/LLVM/bin"
-					end
+					llvm_bin_dir = `#{llvm_config} --bindir`.chomp
 					libs << llvm_bin_dir + '/libclang.dll'
 				when :cygwin
-					FFI.typedef :long, :time_t
-					if llvm_config
-						llvm_version = `#{llvm_config} --version`.chomp.split(/\./)
-						1.upto(llvm_version.length) do |len|
-							libs.unshift("clang-#{llvm_version[0...len].join('.')}")
-						end
-					else
-						llvm_bin_dir = File.real_path "#{ENV['PROGRAMFILES']}/LLVM/bin"
-						libs << llvm_bin_dir + '/libclang.dll'
+					llvm_version = `#{llvm_config} --version`.chomp.split(/\./)
+					llvm_version.length.downto(1) do |len|
+						libs << "clang-#{llvm_version[0...len].join('.')}"
 					end
 				else
 					libs << llvm_library_dir + '/libclang.so'
+				end
+			else
+				case
+				when :windows, :cygwin
+					llvm_bin_dir = File.real_path "#{ENV['PROGRAMFILES']}/LLVM/bin"
+					libs << llvm_bin_dir + '/libclang.dll'
+				else
+					libs << "clang"
 				end
 			end
 
