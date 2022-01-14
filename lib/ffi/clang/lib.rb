@@ -42,21 +42,11 @@ module FFI
 			end
 
 			libs = []
-			begin
-				xcode_dir = `xcode-select -p`.chomp
-				%W[
-					#{xcode_dir}/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib
-					#{xcode_dir}/usr/lib/libclang.dylib
-				].each do |f|
-					if File.exist? f
-						libs << f
-						break
-					end
-				end
-			rescue Errno::ENOENT
-				# Ignore
-			end
 
+			# Order to get "libclang" path:
+			# 1. Get from "LIBCLANG" environment variable
+			# 2. Get via the "llvm-config" command
+			# 3. Get using platform-specific information
 			if ENV['LIBCLANG']
 				libs << ENV['LIBCLANG']
 			elsif llvm_config
@@ -72,11 +62,25 @@ module FFI
 					llvm_version.length.downto(1) do |len|
 						libs << "clang-#{llvm_version[0...len].join('.')}"
 					end
+					libs << "clang"
 				else
 					libs << llvm_library_dir + '/libclang.so'
 				end
 			else
-				case
+				case platform
+				when :darwin
+					if xcode_select = MakeMakefile.find_executable0("xcode-select")
+						xcode_dir = `#{xcode_select} -p`.chomp
+						%W[
+							#{xcode_dir}/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib
+							#{xcode_dir}/usr/lib/libclang.dylib
+						].each do |f|
+							if File.exist? f
+								libs << f
+								break
+							end
+						end
+					end
 				when :windows, :cygwin
 					llvm_bin_dir = File.realpath "#{ENV['PROGRAMFILES']}/LLVM/bin"
 					libs << llvm_bin_dir + '/libclang.dll'
